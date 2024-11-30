@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package api.pitchbackend.v1;
+
+message GetHelloRequest {}
+
+message GetHelloResponse {
+  string message = 1;
+}
+
+service HelloService {
+  rpc GetHello(GetHelloRequest) returns (GetHelloResponse);
+}
