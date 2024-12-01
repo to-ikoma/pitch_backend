@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -43,10 +44,108 @@ func (s *helloService) GetHello(ctx context.Context, req *connect.Request[pb.Get
 
 }
 
+// 基本
+// type Middleware func(http.handler) http.handler
+
+// func middlewareLogging(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		log.Printf("Request: %s %s", r.Method, r.URL.Path)
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
+
+// func panicRecoverMiddleware(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		defer func() {
+// 			if r := recover(); r != nil {
+// 				log.Print("Panic recovered: %v", r)
+// 			}
+// 		}()
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
+
+type loggingInterCeptor struct{}
+
+func NewLoggingInterCeptor() *loggingInterCeptor {
+	return &loggingInterCeptor{}
+}
+
+func (i loggingInterCeptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		log.Printf("Request: %s, Addr: %s", req.Spec().Procedure, req.Peer().Addr)
+		return next(ctx, req)
+	}
+}
+
+func (i loggingInterCeptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return connect.StreamingHandlerFunc(func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		log.Printf("Request: %s, Addr: %s", conn.Spec().Procedure, conn.Peer().Addr)
+		return next(ctx, conn)
+	})
+}
+
+func (i loggingInterCeptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return connect.StreamingClientFunc(func(
+		ctx context.Context,
+		spec connect.Spec,
+	) connect.StreamingClientConn {
+		conn := next(ctx, spec)
+		return conn
+	})
+}
+
+type panicRecoverInterCeptor struct{}
+
+func NewPanicRecoverInterCeptor() *panicRecoverInterCeptor {
+	return &panicRecoverInterCeptor{}
+}
+
+func (i panicRecoverInterCeptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(ctx context.Context, req connect.AnyRequest) (res connect.AnyResponse, err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Print("Panic recovered: %v", r)
+
+				err = connect.NewError(connect.CodeInternal, fmt.Errorf("internal server error: %v", r))
+			}
+		}()
+		return next(ctx, req)
+	}
+}
+
+func (i panicRecoverInterCeptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return connect.StreamingHandlerFunc(func(ctx context.Context, conn connect.StreamingHandlerConn) (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Print("Panic recovered: %v", r)
+
+				err = connect.NewError(connect.CodeInternal, fmt.Errorf("internal server error: %v", r))
+			}
+		}()
+		return next(ctx, conn)
+	})
+}
+
+func (i panicRecoverInterCeptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return connect.StreamingClientFunc(func(
+		ctx context.Context,
+		spec connect.Spec,
+	) connect.StreamingClientConn {
+		conn := next(ctx, spec)
+		return conn
+	})
+}
+
 func main() {
 
 	mux := http.NewServeMux()
-	mux.Handle(svc.NewHelloServiceHandler(&helloService{}))
+	// path, helloHandler := svc.NewHelloServiceHandler(&helloService{})
+	// mux.Handle(path, middlewareLogging(helloHandler))
+	mux.Handle(svc.NewHelloServiceHandler(
+		&helloService{},
+		connect.WithInterceptors(NewPanicRecoverInterCeptor(), NewLoggingInterCeptor()),
+	))
 
 	server := &http.Server{
 		Addr:    ":8080",
