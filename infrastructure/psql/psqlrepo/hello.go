@@ -1,7 +1,7 @@
 package psqlrepo
 
 import (
-	"log"
+	"context"
 	"pitch_backend/domain/model"
 	"pitch_backend/domain/repository"
 	"pitch_backend/infrastructure/psql"
@@ -24,16 +24,19 @@ func (r helloRepositoryImpl) Get() (*model.Hello, error) {
 	}
 	defer db.Close()
 
-	var greeting string
-	err = db.QueryRow("SELECT 'Hello!'").Scan(&greeting)
+	hello := &psqlmodel.Hello{}
+	// err = db.QueryRow("SELECT 'Hello!'").Scan(&greeting)
+	// if err != nil {
+	// 	log.Printf(err.Error())
+	// 	return nil, err
+	// }
+	// hello := psqlmodel.Hello{
+	// 	Message: greeting,
+	// }
+	err = db.NewSelect().Model(hello).Limit(1).Scan(context.Background())
 	if err != nil {
-		log.Printf(err.Error())
 		return nil, err
-	}
-	hello := psqlmodel.Hello{
-		Message: greeting,
 	}
 
 	return hello.ToEntity(), nil
-
 }
