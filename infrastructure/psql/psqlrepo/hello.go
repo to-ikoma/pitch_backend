@@ -25,14 +25,6 @@ func (r helloRepositoryImpl) Get() (*model.Hello, error) {
 	defer db.Close()
 
 	hello := &psqlmodel.Hello{}
-	// err = db.QueryRow("SELECT 'Hello!'").Scan(&greeting)
-	// if err != nil {
-	// 	log.Printf(err.Error())
-	// 	return nil, err
-	// }
-	// hello := psqlmodel.Hello{
-	// 	Message: greeting,
-	// }
 	err = db.NewSelect().Model(hello).Limit(1).Scan(context.Background())
 	if err != nil {
 		return nil, err
