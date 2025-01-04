@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package api.pitchbackend.v1;
+
+import "api/pitchbackend/v1/date.proto";
+
+enum Position {
+  POSITION_UNSPECIFIED = 0;
+  POSITION_PITCHER = 1;
+  POSITION_CATCHER = 2;
+  POSITION_FIRST_BASE = 3;
+  POSITION_SECOND_BASE = 4;
+  POSITION_THIRD_BASE = 5;
+  POSITION_SHORTSTOP = 6;
+  POSITION_LEFT_FIELD = 7;
+  POSITION_CENTER_FIELD = 8;
+  POSITION_RIGHT_FIELD = 9;
+  POSITION_DESIGNATED_HITTER = 10;
+}
+
+message Player {
+  string id = 1;
+  string name = 2;
+  repeated Position favorite_position = 3;
+}
+
+message Team {
+  string id = 1;
+  repeated Player players = 2;
+  string name = 3;
+}
+
+message StartingMember {
+  string id = 1;
+  int32 order_number = 2;
+  Player player = 3;
+  Position position = 4;
+}
+
+message Lineup {
+  string id = 1;
+  Team team = 2;
+  repeated StartingMember starting_members = 3;
+}
+
+message Game {
+  string id = 1;
+  Date date = 2;
+  bool dh_enbabled = 3;
+  string title = 4;
+  Lineup first_team = 5;
+  Lineup second_team = 6;
+}
+
+message CreateGameRequest {
+  Game game = 1;
+}
+
+message CreateGameResponse {}
+
+service GameService {
+  rpc CreateGame(CreateGameRequest) returns (CreateGameResponse);
+}
