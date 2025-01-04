@@ -1,0 +1,65 @@
+-- +goose Up
+-- +goose StatementBegin
+CREATE TABLE IF NOT EXISTS user_account (
+    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS game (
+    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    date TIMESTAMP,           
+    title TEXT,               
+    is_enable_dh BOOLEAN NOT NULL DEFAULT FALSE,
+    user_id UUID NOT NULL REFERENCES user_account(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS team (
+    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    user_id UUID NOT NULL REFERENCES user_account(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS lineup (
+    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    game_id UUID NOT NULL REFERENCES game(id) ON DELETE CASCADE,
+    team_id UUID NOT NULL REFERENCES team(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS player (
+    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    favorite_positions TEXT[] NOT NULL,
+    team_id UUID NOT NULL REFERENCES team(id) ON DELETE SET NULL,
+    user_id UUID NOT NULL REFERENCES user_account(id) ON DELETE CASCADE, 
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS starting_member(
+    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    lineup_id UUID NOT NULL REFERENCES lineup(id) ON DELETE CASCADE,
+    player_id UUID NOT NULL REFERENCES player(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+drop table starting_member;
+drop table lineup;
+drop table player;
+drop table team;
+drop table game;
+drop table user_account;
+-- +goose StatementEnd
