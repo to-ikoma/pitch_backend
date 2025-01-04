@@ -45,7 +45,7 @@ message Lineup {
 
 message Game {
   string id = 1;
-  Date date = 2;
+  optional Date date = 2;
   bool dh_enbabled = 3;
   string title = 4;
   Lineup first_team = 5;

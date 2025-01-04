@@ -5,3 +5,15 @@ type Team struct {
 	Name    string
 	Players []*Player
 }
+
+// type OptionalTeam struct {
+// 	Players []*Player
+// }
+
+// func NewTeam(option OptionalTeam) *Team {
+// 	return &Team{
+// 		ID:      NewTeamID(),
+// 		Name:    "",
+// 		Players: option.Players,
+// 	}
+// }

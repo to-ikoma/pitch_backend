@@ -5,3 +5,13 @@ type Player struct {
 	Name              string
 	FavoritePositions []Position
 }
+
+// func NewPlayer() *Player {
+// 	return &Player{
+// 		ID:   NewPlayerID(),
+// 		Name: "",
+// 		FavoritePositions: []Position{
+// 			Unspecified,
+// 		},
+// 	}
+// }
