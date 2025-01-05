@@ -53,7 +53,9 @@ message Game {
 }
 
 message CreateGameRequest {
-  Game game = 1;
+  optional Date date = 1;
+  bool dh_enbabled = 2;
+  string title = 3;
 }
 
 message CreateGameResponse {}
